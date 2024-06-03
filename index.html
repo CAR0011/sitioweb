@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Capture and Convert Image</title>
+    <style>
+        video, canvas {
+            display: block;
+            margin: 20px auto;
+            max-width: 100%;
+            height: auto;
+        }
+        #video {
+            border: 2px solid red;
+            position: relative;
+        }
+        #video::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 200px;
+            height: 200px;
+            border: 2px dashed white;
+            transform: translate(-50%, -50%);
+        }
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            text-align: left;
+            font-family: monospace;
+            overflow: auto;
+        }
+        #container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        button {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <h1 style="text-align:center;">Capture and Convert Image</h1>
+    <div id="container">
+        <video id="video" width="640" height="480" autoplay playsinline></video>
+        <button id="capture">Capture Image</button>
+    </div>
+    <canvas id="canvas" width="200" height="200" style="display:none;"></canvas>
+    <pre id="output"></pre>
+    <script>
+        // Accede a la cámara web
+        const video = document.getElementById('video');
+
+        function startVideo() {
+            const constraints = {
+                video: {
+                    facingMode: "user",
+                    width: { ideal: 640 },
+                    height: { ideal: 480 }
+                }
+            };
+            navigator.mediaDevices.getUserMedia(constraints)
+                .then(stream => {
+                    video.srcObject = stream;
+                })
+                .catch(err => {
+                    console.error('Error accessing webcam: ' + err);
+                });
+        }
+
+        document.addEventListener("DOMContentLoaded", startVideo);
+
+        // Captura la imagen y la convierte a binario
+        document.getElementById('capture').addEventListener('click', () => {
+            const canvas = document.getElementById('canvas');
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 170, 70, 300, 300, 0, 0, canvas.width, canvas.height); // Ajustamos el área de captura
+
+            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+            const binaryImage = convertToBinary(imageData);
+            displayBinaryImage(binaryImage);
+        });
+
+        // Convierte la imagen a binario (0 y 1)
+        function convertToBinary(imageData) {
+            const data = imageData.data;
+            const binary = [];
+            for (let i = 0; i < data.length; i += 4) {
+                const r = data[i];
+                const g = data[i + 1];
+                const b = data[i + 2];
+                const grayscale = 0.3 * r + 0.59 * g + 0.11 * b;
+                const bit = grayscale < 120 ? 0 : 1; // Ajustamos el umbral
+                binary.push(bit);
+            }
+            return binary;
+        }
+
+        // Muestra la imagen binaria
+        function displayBinaryImage(binaryImage) {
+            const output = document.getElementById('output');
+            const width = 200;
+            const height = 200;
+            let result = '';
+            for (let i = 0; i < height; i++) {
+                for (let j = 0; j < width; j++) {
+                    result += binaryImage[i * width + j] ? '1' : '0';
+                }
+                result += '\n';
+            }
+            output.textContent = result;
+        }
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
